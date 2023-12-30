@@ -1,55 +1,90 @@
 import { Image, StyleSheet, View, Alert, Text } from "react-native";
 import OutlinedButton from "../UI/OutlinedButton";
 import { Colors } from "../../contants/colors";
-import { useState } from "react";
-import { getCurrentPositionAsync, useForegroundPermissions,PermissionStatus } from 'expo-location'
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  getCurrentPositionAsync,
+  useForegroundPermissions,
+  PermissionStatus,
+} from "expo-location";
 import { getMapPreview } from "../../util/location";
+import {
+  useNavigation,
+  useRoute,
+  useIsFocused,
+} from "@react-navigation/native";
+import IconButton from "../UI/IconButton";
 function LocationPicker() {
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
-   const [locationPermissionInformation,requestPermission] = useForegroundPermissions();
-   async function verifyPermissions(){
-    if (locationPermissionInformation.status === PermissionStatus.UNDETERMINED) {
-        const permissionResponse = await requestPermission();
-  
-        return permissionResponse.granted;
-      }
-  
-      if (locationPermissionInformation.status === PermissionStatus.DENIED) {
-        Alert.alert(
-          "Insufficient permission!",
-          "You need to grant location permissions to use this app."
-        );
-        return false;
-      }
-      return true;
-   }
+  const route = useRoute();
 
-    const [pickedLocation,setPickedLocation] = useState();
+  const [locationPermissionInformation, requestPermission] =
+    useForegroundPermissions();
+
+ 
+  async function verifyPermissions() {
+    if (
+      locationPermissionInformation.status === PermissionStatus.UNDETERMINED
+    ) {
+      const permissionResponse = await requestPermission();
+
+      return permissionResponse.granted;
+    }
+
+    if (locationPermissionInformation.status === PermissionStatus.DENIED) {
+      Alert.alert(
+        "Insufficient permission!",
+        "You need to grant location permissions to use this app."
+      );
+      return false;
+    }
+    return true;
+  }
+
+  const [pickedLocation, setPickedLocation] = useState();
 
   async function getLocationHandler() {
     const hasPermission = await verifyPermissions();
-    if(!hasPermission){
-        return;
+    if (!hasPermission) {
+      return;
     }
-   const location = await getCurrentPositionAsync();
+    const location = await getCurrentPositionAsync();
     setPickedLocation({
-        lat: location.coords.latitude,
-        lng: location.coords.longitude
-    })
-}
-  function pickOnMapHandler() {}
-
-  let locationPreview = <Text>No location picked yet.</Text>
-
-  if(pickedLocation){
-    locationPreview = <Image style={styles.image} source={{uri: getMapPreview(pickedLocation.lat,pickedLocation.lng)}} />
+      lat: location.coords.latitude,
+      lng: location.coords.longitude,
+    });
+  }
+  function pickOnMapHandler() {
+    navigation.navigate("Map");
   }
 
+  const mapPickedLocation = useCallback(
+    route.params && {
+      lat: route.params.pickedLat,
+      lng: route.params.pickedLng,
+    },
+    [route.params]
+  );
+  useEffect(() => {
+    mapPickedLocation && setPickedLocation(mapPickedLocation);
+  }, [mapPickedLocation]);
+
+  let locationPreview = <Text>No location picked yet.</Text>;
+
+  if (pickedLocation) {
+    locationPreview = (
+      <Image
+        style={styles.image}
+        source={{ uri: getMapPreview(pickedLocation.lat, pickedLocation.lng) }}
+      />
+    );
+  }
+ 
   return (
     <View>
-      <View style={styles.mapPreview}>
-        {locationPreview}
-      </View>
+      <View style={styles.mapPreview}>{locationPreview}</View>
       <View style={styles.actions}>
         <OutlinedButton icon="location" onPress={getLocationHandler}>
           Locate User
@@ -77,10 +112,10 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     justifyContent: "space-around",
-    alignItems: "center"
+    alignItems: "center",
   },
   image: {
     width: "100%",
-    height: "100%"
-  }
+    height: "100%",
+  },
 });
