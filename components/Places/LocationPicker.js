@@ -14,7 +14,7 @@ import {
   useIsFocused,
 } from "@react-navigation/native";
 import IconButton from "../UI/IconButton";
-function LocationPicker() {
+function LocationPicker({onPickLocation}) {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -70,6 +70,10 @@ function LocationPicker() {
   useEffect(() => {
     mapPickedLocation && setPickedLocation(mapPickedLocation);
   }, [mapPickedLocation]);
+
+  useEffect(()=>{
+    onPickLocation(pickedLocation)
+  },[pickedLocation,onPickLocation])
 
   let locationPreview = <Text>No location picked yet.</Text>;
 
