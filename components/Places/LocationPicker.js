@@ -7,7 +7,7 @@ import {
   useForegroundPermissions,
   PermissionStatus,
 } from "expo-location";
-import { getMapPreview } from "../../util/location";
+import { getAddress, getMapPreview } from "../../util/location";
 import {
   useNavigation,
   useRoute,
@@ -72,7 +72,13 @@ function LocationPicker({onPickLocation}) {
   }, [mapPickedLocation]);
 
   useEffect(()=>{
-    onPickLocation(pickedLocation)
+    async function handleLocation(){
+      if(pickedLocation){
+        const address = await getAddress(pickedLocation.lat,pickedLocation.lng)
+        onPickLocation({...pickedLocation,address: address})
+      }
+    }
+   handleLocation();
   },[pickedLocation,onPickLocation])
 
   let locationPreview = <Text>No location picked yet.</Text>;
